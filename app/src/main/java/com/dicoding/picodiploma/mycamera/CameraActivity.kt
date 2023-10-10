@@ -8,6 +8,8 @@ import android.view.WindowManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
@@ -17,6 +19,7 @@ import java.lang.Exception
 class CameraActivity : AppCompatActivity() {
     private lateinit var binding: ActivityCameraBinding
     private var cameraSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+    private var imageCapture: ImageCapture? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,12 +54,15 @@ class CameraActivity : AppCompatActivity() {
                     it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
                 }
 
+            imageCapture = ImageCapture.Builder().build()
+
             try {
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(
                     this,
                     cameraSelector,
-                    preview
+                    preview,
+                    imageCapture
                 )
             } catch (exc: Exception) {
                 Toast.makeText(
@@ -71,6 +77,34 @@ class CameraActivity : AppCompatActivity() {
 
     private fun takePhoto() {
         // takePhoto
+        val imageCapture = imageCapture ?: return
+
+        val photoFile = createCustomTempFile(application)
+
+        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+
+        imageCapture.takePicture(
+            outputOptions,
+            ContextCompat.getMainExecutor(this),
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                    Toast.makeText(
+                        this@CameraActivity,
+                        "Berhasil mengambil gambar.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+
+                override fun onError(exception: ImageCaptureException) {
+                    Toast.makeText(
+                        this@CameraActivity,
+                        "Gagal mengambil gambar.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    Log.e(TAG, "onError: ${exception.message}")
+                }
+            }
+        )
     }
 
     private fun hideSystemUI() {
