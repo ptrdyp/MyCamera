@@ -1,6 +1,7 @@
 package com.dicoding.picodiploma.mycamera
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
@@ -59,7 +60,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startCameraX() {
-        Toast.makeText(this, "Fitur ini belum tersedia", Toast.LENGTH_SHORT).show()
+        val intent = Intent(this, CameraActivity::class.java)
+        startActivity(intent)
     }
 
     private fun uploadImage() {
