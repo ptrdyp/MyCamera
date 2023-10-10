@@ -31,7 +31,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startCamera() {
-        Toast.makeText(this, "Fitur ini belum tersedia", Toast.LENGTH_SHORT).show()
+        currentImageUri = getImageUri(this)
+        launcherIntentCamera.launch(currentImageUri)
     }
 
     private fun startCameraX() {
@@ -57,6 +58,14 @@ class MainActivity : AppCompatActivity() {
         currentImageUri?.let {
             Log.d("Image URI", "showImage: $it")
             binding.previewImageView.setImageURI(it)
+        }
+    }
+
+    private val launcherIntentCamera = registerForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { isSuccess ->
+        if (isSuccess) {
+            showImage()
         }
     }
 
