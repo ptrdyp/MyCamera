@@ -37,6 +37,10 @@ android {
 
 dependencies {
 
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.1")
+    implementation("androidx.activity:activity-ktx:1.7.2")
+
     implementation("androidx.exifinterface:exifinterface:1.3.6")
 
     implementation("com.squareup.retrofit2:retrofit:2.9.0")

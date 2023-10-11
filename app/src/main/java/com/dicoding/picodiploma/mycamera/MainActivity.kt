@@ -10,27 +10,23 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
-import androidx.lifecycle.lifecycleScope
 import com.dicoding.picodiploma.mycamera.CameraActivity.Companion.CAMERAX_RESULT
-import com.dicoding.picodiploma.mycamera.data.api.ApiConfig
-import com.dicoding.picodiploma.mycamera.data.api.FileUploadResponse
+import com.dicoding.picodiploma.mycamera.data.ResultState
 import com.dicoding.picodiploma.mycamera.databinding.ActivityMainBinding
-import com.google.gson.Gson
-import kotlinx.coroutines.launch
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
-import retrofit2.HttpException
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
     private var currentImageUri: Uri? = null
+
+    private val viewModel by viewModels<MainViewModel> {
+        ViewModelFactory.getInstance()
+    }
 
     private val requestPermissionLauncher =
         registerForActivityResult(
@@ -83,27 +79,23 @@ class MainActivity : AppCompatActivity() {
             Log.d("Image File", "showImage: ${imageFile.path}")
             val description = "Ini adalah deskripsi gambar"
 
-            showLoading(true)
+            viewModel.uploadImage(imageFile, description).observe(this) { result ->
+                if (result != null) {
+                    when (result) {
+                        is ResultState.Loading -> {
+                            showLoading(true)
+                        }
 
-            val requestBody = description.toRequestBody("text/plain".toMediaType())
-            val requestImageFile = imageFile.asRequestBody("image/jpeg".toMediaType())
-            val multipartBody = MultipartBody.Part.createFormData(
-                "photo",
-                imageFile.name,
-                requestImageFile
-            )
+                        is ResultState.Success -> {
+                            showToast(result.data.message)
+                            showLoading(false)
+                        }
 
-            lifecycleScope.launch {
-                try {
-                    val apiService = ApiConfig.getApiService()
-                    val successResponse = apiService.uploadImage(multipartBody, requestBody)
-                    showToast(successResponse.message)
-                    showLoading(false)
-                } catch (e: HttpException) {
-                    val errorBody = e.response()?.errorBody()?.string()
-                    val errorResponse = Gson().fromJson(errorBody, FileUploadResponse::class.java)
-                    showToast(errorResponse.message)
-                    showLoading(false)
+                        is ResultState.Error -> {
+                            showToast(result.error)
+                            showLoading(false)
+                        }
+                    }
                 }
             }
         } ?: showToast(getString(R.string.empty_image_warning))
